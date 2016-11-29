@@ -100,7 +100,7 @@ func main() {
 		}
 
 		milestone := new(taiga.Milestone)
-		if issue.Milestone.ID > 0 {
+		if issue.Milestone != nil {
 			m, _, _ := taigaClient.Milestones.FindMilestoneByName(issue.Milestone.Title, taigaProject.ID)
 			if len(m) == 1 {
 				milestone = m[0]
