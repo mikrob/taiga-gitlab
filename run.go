@@ -86,6 +86,8 @@ func main() {
 	var objectToCreate string
 
 	for _, issue := range issues {
+		var tags []string
+		tags = append(tags, projectName)
 		issueSubjectPrefix := fmt.Sprintf("gitlab/%s/%d", projectName, issue.IID)
 		issueSubject := fmt.Sprintf("%s %s", issueSubjectPrefix, issue.Title)
 		for _, label := range issue.Labels {
@@ -96,24 +98,60 @@ func main() {
 				objectToCreate = "userstory"
 			}
 		}
+
+		milestone := new(taiga.Milestone)
+		if issue.Milestone.ID > 0 {
+			m, _, _ := taigaClient.Milestones.FindMilestoneByName(issue.Milestone.Title, taigaProject.ID)
+			if len(m) == 1 {
+				milestone = m[0]
+			} else {
+				milestoneStart := issue.Milestone.StartDate
+				milestoneFinish := issue.Milestone.DueDate
+				if issue.Milestone.StartDate == "" {
+					milestoneStart = fmt.Sprintf("%d-%02d-%02d",
+						issue.Milestone.CreatedAt.Year(),
+						issue.Milestone.CreatedAt.Month(),
+						issue.Milestone.CreatedAt.Day())
+
+				}
+				if issue.Milestone.DueDate == "" {
+					milestoneFinish = fmt.Sprintf("%d-%02d-%02d",
+						issue.Milestone.CreatedAt.Year(),
+						issue.Milestone.CreatedAt.Month(),
+						issue.Milestone.CreatedAt.Day())
+				}
+				opt := &taiga.CreateMilestoneOptions{
+					ProjectID:       taigaProject.ID,
+					Name:            issue.Milestone.Title,
+					EstimatedStart:  milestoneStart,
+					EstimatedFinish: milestoneFinish,
+				}
+				m, _, err := taigaClient.Milestones.CreateMilestone(opt)
+				if err != nil {
+					log.Fatal("Cannot create milestone ", fmt.Sprintf("%+v", opt), err.Error())
+				}
+				milestone = m
+			}
+		}
 		if objectToCreate == "issue" {
-			switch issue.State {
-			case "closed":
+			switch {
+			case issue.State == "closed":
 				issueStatus = issueStatusClosed
+			case issue.Assignee.ID > 0:
+				issueStatus = issueStatusInprogress
 			default:
 				issueStatus = issueStatusNew
 			}
-			if issue.Assignee.ID > 0 {
-				issueStatus = issueStatusInprogress
-			}
-			var tags []string
-			tags = append(tags, projectName)
+
 			i := &taiga.CreateIssueOptions{
 				Subject:     issueSubject,
 				ProjectID:   taigaProject.ID,
 				Description: fmt.Sprintf("Gitlab issue: %s/%s/issues/%d\n\n%s", gitlabURL, projectName, issue.IID, issue.Description),
 				Status:      issueStatus.ID,
 				Tags:        tags,
+			}
+			if milestone.ID > 0 {
+				i.Milestone = milestone.ID
 			}
 			searchIssues, _, _ := taigaClient.Issues.FindIssueByRegexName(issueSubjectPrefix)
 			if len(searchIssues) == 0 {
@@ -125,20 +163,23 @@ func main() {
 				fmt.Println("Created issue", issue.ID, issueStatus.Name)
 			}
 		} else if objectToCreate == "userstory" {
-			switch issue.State {
-			case "closed":
+			switch {
+			case issue.State == "closed":
 				userstoryStatus = userstoryStatusDone
+			case issue.Assignee.ID > 0:
+				userstoryStatus = userstoryStatusInprogress
 			default:
 				userstoryStatus = userstoryStatusNew
-			}
-			if issue.Assignee.ID > 0 {
-				userstoryStatus = userstoryStatusInprogress
 			}
 			u := &taiga.CreateUserstoryOptions{
 				Subject:     issueSubject,
 				ProjectID:   taigaProject.ID,
-				Description: fmt.Sprintf("Gitlab issue: http://gitlab.botsunit.com/%s/issues/%d\n\n%s", projectName, issue.IID, issue.Description),
+				Description: fmt.Sprintf("Gitlab issue: %s/%s/issues/%d\n\n%s", gitlabURL, projectName, issue.IID, issue.Description),
 				Status:      userstoryStatus.ID,
+				Tags:        tags,
+			}
+			if milestone.ID > 0 {
+				u.Milestone = milestone.ID
 			}
 			searchUserstories, _, _ := taigaClient.Userstories.FindUserstoryByRegexName(issueSubjectPrefix)
 			if len(searchUserstories) == 0 {

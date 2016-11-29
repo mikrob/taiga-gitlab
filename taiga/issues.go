@@ -17,6 +17,7 @@ type Issue struct {
 	Status      int      `json:"status"`
 	Tags        []string `json:"tags"`
 	Assigne     string   `json:"assigned_to"`
+	Milestone   int      `json:"milestone,omitempty"`
 }
 
 // CreateIssueOptions represents the CreateIssue() options
@@ -27,6 +28,7 @@ type CreateIssueOptions struct {
 	Status      int      `json:"status"`
 	Tags        []string `json:"tags"`
 	Assigne     string   `json:"assigned_to"`
+	Milestone   int      `json:"milestone,omitempty"`
 }
 
 // IssueStatus represents a Taiga issue status
