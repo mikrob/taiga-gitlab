@@ -1,5 +1,7 @@
 package taiga
 
+import "fmt"
+
 // UsersService handles communication with the user related methods of
 // the Taiga API.
 type UsersService struct {
@@ -39,6 +41,35 @@ func (s *UsersService) CurrentUser() (*User, *Response, error) {
 	}
 
 	return usr, resp, err
+}
+
+// ListUsers lists Taiga users
+func (s *UsersService) ListUsers() ([]*User, *Response, error) {
+	req, err := s.client.NewRequest("GET", "users", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	var u []*User
+	resp, err := s.client.Do(req, &u)
+	if err != nil {
+		return nil, resp, err
+	}
+	return u, resp, err
+}
+
+// GetUser lists Taiga users
+func (s *UsersService) GetUser(uid int) (*User, *Response, error) {
+	uri := fmt.Sprintf("users/%d", uid)
+	req, err := s.client.NewRequest("GET", uri, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	var u *User
+	resp, err := s.client.Do(req, &u)
+	if err != nil {
+		return nil, resp, err
+	}
+	return u, resp, err
 }
 
 // Login retrieve current logged user
