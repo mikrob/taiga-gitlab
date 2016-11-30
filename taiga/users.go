@@ -28,6 +28,12 @@ type Login struct {
 	Token string `json:"auth_token"`
 }
 
+// CreateUserOptions represents the CreateUser() options
+type CreateUserOptions struct {
+	Username string
+	Password string
+}
+
 // CurrentUser retrieve current logged user
 func (s *UsersService) CurrentUser() (*User, *Response, error) {
 	req, err := s.client.NewRequest("GET", "users/me", nil)
@@ -91,3 +97,19 @@ func (s *UsersService) Login() (*Login, *Response, error) {
 	s.client.Token = login.Token
 	return login, resp, err
 }
+
+// CreateUser creates a new Taiga user
+// TODO this API does not exists
+// func (s *UsersService) CreateUser(opt *CreateUserOptions) (*User, *Response, error) {
+// 	s.client.SetBaseURL()
+// 	req, err := s.client.NewRequest("POST", "users", opt)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	u := new(User)
+// 	resp, err := s.client.Do(req, u)
+// 	if err != nil {
+// 		return nil, resp, err
+// 	}
+// 	return u, resp, err
+// }
