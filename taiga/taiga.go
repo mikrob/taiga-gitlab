@@ -34,6 +34,7 @@ type Client struct {
 	Issues      *IssuesService
 	Userstories *UserstoriesService
 	Milestones  *MilestonesService
+	Memberships *MembershipsService
 }
 
 // Response is a Taiga API response
@@ -78,6 +79,7 @@ func newClient(httpClient *http.Client, username string, password string) *Clien
 	c.Issues = &IssuesService{client: c}
 	c.Userstories = &UserstoriesService{client: c}
 	c.Milestones = &MilestonesService{client: c}
+	c.Memberships = &MembershipsService{client: c}
 	return c
 }
 

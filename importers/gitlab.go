@@ -9,6 +9,46 @@ import (
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
+// Proxy bridges taiga and gitlab client
+type Proxy struct {
+	taiga        *taiga.Client
+	gitlab       *gitlab.Client
+	taigaProject *taiga.Project
+}
+
+// ImportGitlabUser sync Gitlab user to Taiga
+func (p *Proxy) ImportGitlabUser(gitlabUser *gitlab.User) (*taiga.User, error) {
+	taigaUser, _, err := p.taiga.Users.FindUserByUsername(gitlabUser.Username)
+	if err != nil {
+		return nil, err
+	}
+	if taigaUser == nil {
+		return nil, fmt.Errorf("Please create Taiga following user:\nusername: %s\nemail: %s\nname: %s\n",
+			gitlabUser.Username,
+			gitlabUser.Email,
+			gitlabUser.Name)
+	}
+	// ensure user is member of taiga project
+
+	m, _, err := p.taiga.Memberships.GetUserInProjectMembership(taigaUser.ID, p.taigaProject.ID)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	if m == nil {
+		createMembershipOpts := &taiga.CreateMembershipOptions{
+			RoleID:    1,
+			Email:     taigaUser.Email,
+			ProjectID: p.taigaProject.ID,
+		}
+		_, _, err := p.taiga.Memberships.CreateMembership(createMembershipOpts)
+		if err != nil {
+			return nil, fmt.Errorf("Cannot create membership for %s, %s", taigaUser.Username, err.Error())
+		}
+	}
+
+	return taigaUser, nil
+}
+
 // ImportGitlab2Taiga imports Gitlab issues, milestones to Taiga
 func ImportGitlab2Taiga(c *cli.Context) error {
 	requiredFlagsStrings := []string{
@@ -97,8 +137,31 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 	issueStatus := new(taiga.IssueStatus)
 	userstoryStatus := new(taiga.UserstoryStatus)
 	var objectToCreate string
-
+	z := &Proxy{taiga: taigaClient, gitlab: git, taigaProject: taigaProject}
 	for _, issue := range issues {
+		// sync author
+		issueAuthor, _, err := git.Users.GetUser(issue.Author.ID)
+		if err != nil {
+			log.Fatalf("unable to found Gitlab user %s", issue.Author.Name)
+		}
+		_, err = z.ImportGitlabUser(issueAuthor)
+		if err != nil {
+			log.Fatalf("Cannot sync user %s from Gitlab to Taiga: %s", issueAuthor.Username, err.Error())
+		}
+		// sync assignee
+		issueAssigneTaiga := new(taiga.User)
+		if issue.Assignee.ID > 0 {
+			issueAssigneGitlab, _, _err := git.Users.GetUser(issue.Assignee.ID)
+			if _err != nil {
+				log.Fatalf("unable to found Gitlab user %s", issueAssigneGitlab.Name)
+			}
+			issueAssigneTaiga, err = z.ImportGitlabUser(issueAssigneGitlab)
+			if err != nil {
+				log.Fatalf("Cannot sync user %s from Gitlab to Taiga: %s", issueAssigneGitlab.Username, err.Error())
+			}
+		}
+
+		// sync creator
 		var tags []string
 		tags = append(tags, projectName)
 		issueSubjectPrefix := fmt.Sprintf("gitlab/%s/%d", projectName, issue.IID)
@@ -166,14 +229,18 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 			if milestone.ID > 0 {
 				i.Milestone = milestone.ID
 			}
+			if issueAssigneTaiga.ID > 0 {
+				i.Assigne = issueAssigneTaiga.ID
+			}
 			searchIssues, _, _ := taigaClient.Issues.FindIssueByRegexName(issueSubjectPrefix)
 			if len(searchIssues) == 0 {
 				issue, _, err := taigaClient.Issues.CreateIssue(i)
 				if err != nil {
-					log.Print(err.Error())
-					continue
+					log.Fatalf("Cannot create issue %s", err.Error())
 				}
-				fmt.Println("Created issue", issue.ID, issueStatus.Name)
+				log.Println("Created issue", issue.ID, issueStatus.Name)
+			} else {
+				log.Printf("Gitlab issue found in Taiga %+v", searchIssues)
 			}
 		} else if objectToCreate == "userstory" {
 			switch {
@@ -194,14 +261,18 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 			if milestone.ID > 0 {
 				u.Milestone = milestone.ID
 			}
+			if issueAssigneTaiga.ID > 0 {
+				u.Assigne = issueAssigneTaiga.ID
+			}
 			searchUserstories, _, _ := taigaClient.Userstories.FindUserstoryByRegexName(issueSubjectPrefix)
 			if len(searchUserstories) == 0 {
 				userstory, _, err := taigaClient.Userstories.CreateUserstory(u)
 				if err != nil {
-					log.Print(err.Error())
-					continue
+					log.Fatal(err.Error())
 				}
 				fmt.Println("Created user story", userstory.ID, userstoryStatus.Name)
+			} else {
+				log.Printf("Gitlab issue found in Taiga %+v", searchUserstories)
 			}
 		}
 	}

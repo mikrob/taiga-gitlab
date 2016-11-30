@@ -14,6 +14,7 @@ type User struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	FullName string `json:"full_name"`
+	IsActive bool   `json:"is_active"`
 }
 
 // LoginRequest represents the login request payload
@@ -96,6 +97,20 @@ func (s *UsersService) Login() (*Login, *Response, error) {
 	}
 	s.client.Token = login.Token
 	return login, resp, err
+}
+
+// FindUserByUsername fetch users by name
+func (s *UsersService) FindUserByUsername(name string) (*User, *Response, error) {
+	users, resp, err := s.ListUsers()
+	if err != nil {
+		return nil, resp, err
+	}
+	for _, user := range users {
+		if user.Username == name {
+			return s.GetUser(user.ID)
+		}
+	}
+	return nil, resp, err
 }
 
 // CreateUser creates a new Taiga user

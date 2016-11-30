@@ -10,13 +10,14 @@ type UserstoriesService struct {
 
 // Userstory represent a Taiga user story
 type Userstory struct {
-	ID          int      `json:"id"`
-	Subject     string   `json:"subject"`
-	ProjectID   int      `json:"project"`
-	Description string   `json:"description"`
-	Status      int      `json:"status"`
-	Tags        []string `json:"tags"`
-	Milestone   int      `json:"milestone,omitempty"`
+	ID          int    `json:"id"`
+	Subject     string `json:"subject"`
+	ProjectID   int    `json:"project"`
+	Description string `json:"description"`
+	Status      int    `json:"status"`
+	Milestone   int    `json:"milestone,omitempty"`
+	OwnerID     int    `json:"owner"`
+	Assigne     int    `json:"assigned_to"`
 }
 
 // CreateUserstoryOptions represents the CreateUserstory() options
@@ -27,6 +28,7 @@ type CreateUserstoryOptions struct {
 	Status      int      `json:"status"`
 	Tags        []string `json:"tags"`
 	Milestone   int      `json:"milestone,omitempty"`
+	Assigne     int      `json:"assigned_to"`
 }
 
 // UserstoryStatus represents a Taiga user story status

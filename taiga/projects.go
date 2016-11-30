@@ -10,8 +10,16 @@ type ProjectsService struct {
 
 // Project represents a Taiga project
 type Project struct {
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Roles []*Role `json:"roles"`
+}
+
+// Role reprensents a Taiga project role
+type Role struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+	Slug string `json:"slug"`
 }
 
 // ListProjects retrieve a Taiga project by its slug name

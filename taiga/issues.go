@@ -10,14 +10,14 @@ type IssuesService struct {
 
 // Issue represent a Taiga issue
 type Issue struct {
-	ID          int      `json:"id"`
-	Subject     string   `json:"subject"`
-	ProjectID   int      `json:"project"`
-	Description string   `json:"description"`
-	Status      int      `json:"status"`
-	Tags        []string `json:"tags"`
-	Assigne     string   `json:"assigned_to"`
-	Milestone   int      `json:"milestone,omitempty"`
+	ID          int    `json:"id"`
+	Subject     string `json:"subject"`
+	ProjectID   int    `json:"project"`
+	Description string `json:"description"`
+	Status      int    `json:"status"`
+	Assigne     int    `json:"assigned_to"`
+	Milestone   int    `json:"milestone,omitempty"`
+	OwnerID     int    `json:"owner"`
 }
 
 // CreateIssueOptions represents the CreateIssue() options
@@ -27,7 +27,7 @@ type CreateIssueOptions struct {
 	Description string   `json:"description"`
 	Status      int      `json:"status"`
 	Tags        []string `json:"tags"`
-	Assigne     string   `json:"assigned_to"`
+	Assigne     int      `json:"assigned_to"`
 	Milestone   int      `json:"milestone,omitempty"`
 }
 
@@ -46,7 +46,6 @@ func (s *IssuesService) CreateIssue(opt *CreateIssueOptions) (*Issue, *Response,
 	if err != nil {
 		return nil, nil, err
 	}
-
 	i := new(Issue)
 	resp, err := s.client.Do(req, i)
 	if err != nil {
