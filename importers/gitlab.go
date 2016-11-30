@@ -80,9 +80,9 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 	}
 	fmt.Println("Project Name:", taigaProject.Name)
 
-	gitlabToken := "1qVsgb99XFst2GRwBXxn"
-	gitlabURL := "https://gitlab.botsunit.com"
-	projectName := "boobs/payment"
+	gitlabToken := c.String("gitlab-token")
+	gitlabURL := c.String("gitlab-url")
+	projectName := c.String("gitlab-project")
 	git := gitlab.NewClient(nil, gitlabToken)
 	git.SetBaseURL(fmt.Sprintf("%s/api/v3", gitlabURL))
 	project, _, err := git.Projects.GetProject(projectName)
