@@ -35,6 +35,7 @@ type Client struct {
 	Userstories *UserstoriesService
 	Milestones  *MilestonesService
 	Memberships *MembershipsService
+	Points      *PointsService
 }
 
 // Response is a Taiga API response
@@ -80,6 +81,7 @@ func newClient(httpClient *http.Client, username string, password string) *Clien
 	c.Userstories = &UserstoriesService{client: c}
 	c.Milestones = &MilestonesService{client: c}
 	c.Memberships = &MembershipsService{client: c}
+	c.Points = &PointsService{client: c}
 	return c
 }
 
@@ -111,7 +113,7 @@ func (c *Client) NewRequest(method, path string, opt interface{}) (*http.Request
 		Host:       u.Host,
 	}
 
-	if method == "POST" || method == "PUT" {
+	if method == "POST" || method == "PUT" || method == "PATCH" {
 		bodyBytes, err := json.Marshal(opt)
 		if err != nil {
 			return nil, err

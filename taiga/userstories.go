@@ -1,12 +1,18 @@
 package taiga
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 // UserstoriesService handles communication with the user stories related methods of
 // the Taiga API.
 type UserstoriesService struct {
 	client *Client
 }
+
+// CreateUserstoryPointOptions represents a Taiga user story point
+type CreateUserstoryPointOptions map[string]float64
 
 // Userstory represent a Taiga user story
 type Userstory struct {
@@ -17,7 +23,8 @@ type Userstory struct {
 	Status      int    `json:"status"`
 	Milestone   int    `json:"milestone,omitempty"`
 	OwnerID     int    `json:"owner"`
-	Assigne     int    `json:"assigned_to"`
+	Assigne     int    `json:"assigned_to,omitempty"`
+	Version     int    `json:"version"`
 }
 
 // CreateUserstoryOptions represents the CreateUserstory() options
@@ -28,7 +35,8 @@ type CreateUserstoryOptions struct {
 	Status      int      `json:"status"`
 	Tags        []string `json:"tags"`
 	Milestone   int      `json:"milestone,omitempty"`
-	Assigne     int      `json:"assigned_to"`
+	Assigne     int      `json:"assigned_to,omitempty"`
+	//	Points      *CreateUserstoryPointOptions `json:"points",omitempty`
 }
 
 // UserstoryStatus represents a Taiga user story status
@@ -38,6 +46,12 @@ type UserstoryStatus struct {
 	Name      string `json:"name"`
 	ProjectID int    `json:"project"`
 	Slug      string `json:"slug"`
+}
+
+// CreateCommentUserstoryOptions represents the CreateCommentUserstory() options
+type CreateCommentUserstoryOptions struct {
+	Comment string `json:"comment"`
+	Version int    `json:"version"`
 }
 
 // CreateUserstory creates a new project issue.
@@ -90,6 +104,21 @@ func (s *IssuesService) ListUserstoryStatuses() ([]*UserstoryStatus, *Response, 
 	}
 	var u []*UserstoryStatus
 	resp, err := s.client.Do(req, &u)
+	if err != nil {
+		return nil, resp, err
+	}
+	return u, resp, err
+}
+
+// CreateCommentUserstory creates a new comment in project issue.
+func (s *IssuesService) CreateCommentUserstory(userstoryID int, opt *CreateCommentUserstoryOptions) (*Userstory, *Response, error) {
+	url := fmt.Sprintf("userstories/%d", userstoryID)
+	req, err := s.client.NewRequest("PATCH", url, opt)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := new(Userstory)
+	resp, err := s.client.Do(req, u)
 	if err != nil {
 		return nil, resp, err
 	}

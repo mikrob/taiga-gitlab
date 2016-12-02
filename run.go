@@ -47,6 +47,10 @@ func main() {
 			Name:  "taiga-project",
 			Usage: "Taiga project name",
 		},
+		cli.BoolFlag{
+			Name:  "taiga-skip-user",
+			Usage: "Skip user creation",
+		},
 	}
 	app.Commands = []cli.Command{
 		{

@@ -129,7 +129,13 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
-	issuesOptions := &gitlab.ListProjectIssuesOptions{}
+
+	listOpts := &gitlab.ListOptions{
+		PerPage: 100,
+	}
+	issuesOptions := &gitlab.ListProjectIssuesOptions{
+		ListOptions: *listOpts,
+	}
 	issues, _, err := git.Issues.ListProjectIssues(project.ID, issuesOptions)
 	if err != nil {
 		panic(err.Error())
@@ -144,13 +150,15 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 		if err != nil {
 			log.Fatalf("unable to found Gitlab user %s", issue.Author.Name)
 		}
-		_, err = z.ImportGitlabUser(issueAuthor)
-		if err != nil {
-			log.Fatalf("Cannot sync user %s from Gitlab to Taiga: %s", issueAuthor.Username, err.Error())
+		if c.Bool("taiga-skip-user") == false {
+			_, err = z.ImportGitlabUser(issueAuthor)
+			if err != nil {
+				log.Fatalf("Cannot sync user %s from Gitlab to Taiga: %s", issueAuthor.Username, err.Error())
+			}
 		}
 		// sync assignee
 		issueAssigneTaiga := new(taiga.User)
-		if issue.Assignee.ID > 0 {
+		if issue.Assignee.ID > 0 && c.Bool("taiga-skip-user") == false {
 			issueAssigneGitlab, _, _err := git.Users.GetUser(issue.Assignee.ID)
 			if _err != nil {
 				log.Fatalf("unable to found Gitlab user %s", issueAssigneGitlab.Name)
@@ -164,7 +172,7 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 		// sync creator
 		var tags []string
 		tags = append(tags, projectName)
-		issueSubjectPrefix := fmt.Sprintf("gitlab/%s/%d", projectName, issue.IID)
+		issueSubjectPrefix := fmt.Sprintf("GITLAB-%d %s", issue.ID, projectName)
 		issueSubject := fmt.Sprintf("%s %s", issueSubjectPrefix, issue.Title)
 		for _, label := range issue.Labels {
 			switch label {
@@ -234,11 +242,26 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 			}
 			searchIssues, _, _ := taigaClient.Issues.FindIssueByRegexName(issueSubjectPrefix)
 			if len(searchIssues) == 0 {
-				issue, _, err := taigaClient.Issues.CreateIssue(i)
+				taigaIssue, _, err := taigaClient.Issues.CreateIssue(i)
 				if err != nil {
 					log.Fatalf("Cannot create issue %s", err.Error())
 				}
-				log.Println("Created issue", issue.ID, issueStatus.Name)
+				log.Println("Created issue", taigaIssue.ID, taigaIssue.Subject)
+				listNotesOpts := gitlab.ListIssueNotesOptions{}
+				notes, _, _ := git.Notes.ListIssueNotes(project.ID, issue.ID, &listNotesOpts)
+				for _, note := range notes {
+					commentOpts := &taiga.CreateCommentIssueOptions{
+						Comment: fmt.Sprintf("Author: %s\n\n%s", note.Author.Name, note.Body),
+						Version: taigaIssue.Version,
+					}
+					taigaIssuePatched, _, err := taigaClient.Issues.CreateCommentIssue(taigaIssue.ID, commentOpts)
+					if err != nil {
+						log.Fatal("Cannot create comment")
+					}
+					log.Printf("Create new comment %+v", taigaIssuePatched)
+				}
+
+				//	taigaClient.Issues.CreateCommentIssue(issue.ID, )
 			} else {
 				log.Printf("Gitlab issue found in Taiga %+v", searchIssues)
 			}
@@ -271,6 +294,19 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 					log.Fatal(err.Error())
 				}
 				fmt.Println("Created user story", userstory.ID, userstoryStatus.Name)
+				listNotesOpts := gitlab.ListIssueNotesOptions{}
+				notes, _, _ := git.Notes.ListIssueNotes(project.ID, issue.ID, &listNotesOpts)
+				for _, note := range notes {
+					commentOpts := &taiga.CreateCommentUserstoryOptions{
+						Comment: fmt.Sprintf("Author: %s\n\n%s", note.Author.Name, note.Body),
+						Version: userstory.Version,
+					}
+					taigaUserstoryPatched, _, err := taigaClient.Issues.CreateCommentUserstory(userstory.ID, commentOpts)
+					if err != nil {
+						log.Fatal("Cannot create comment")
+					}
+					log.Printf("Create new comment %+v", taigaUserstoryPatched)
+				}
 			} else {
 				log.Printf("Gitlab issue found in Taiga %+v", searchUserstories)
 			}

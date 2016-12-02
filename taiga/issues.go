@@ -1,6 +1,9 @@
 package taiga
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 // IssuesService handles communication with the issues related methods of
 // the Taiga API.
@@ -15,9 +18,10 @@ type Issue struct {
 	ProjectID   int    `json:"project"`
 	Description string `json:"description"`
 	Status      int    `json:"status"`
-	Assigne     int    `json:"assigned_to"`
+	Assigne     int    `json:"assigned_to,omitempty"`
 	Milestone   int    `json:"milestone,omitempty"`
 	OwnerID     int    `json:"owner"`
+	Version     int    `json:"version"`
 }
 
 // CreateIssueOptions represents the CreateIssue() options
@@ -27,8 +31,14 @@ type CreateIssueOptions struct {
 	Description string   `json:"description"`
 	Status      int      `json:"status"`
 	Tags        []string `json:"tags"`
-	Assigne     int      `json:"assigned_to"`
+	Assigne     int      `json:"assigned_to,omitempty"`
 	Milestone   int      `json:"milestone,omitempty"`
+}
+
+// CreateCommentIssueOptions represents the CreateCommentIssue() options
+type CreateCommentIssueOptions struct {
+	Comment string `json:"comment"`
+	Version int    `json:"version"`
 }
 
 // IssueStatus represents a Taiga issue status
@@ -93,4 +103,19 @@ func (s *IssuesService) FindIssueByRegexName(pattern string) ([]*Issue, *Respons
 		}
 	}
 	return matchingIssue, resp, err
+}
+
+// CreateCommentIssue creates a new comment in project issue.
+func (s *IssuesService) CreateCommentIssue(issueID int, opt *CreateCommentIssueOptions) (*Issue, *Response, error) {
+	url := fmt.Sprintf("issues/%d", issueID)
+	req, err := s.client.NewRequest("PATCH", url, opt)
+	if err != nil {
+		return nil, nil, err
+	}
+	i := new(Issue)
+	resp, err := s.client.Do(req, i)
+	if err != nil {
+		return nil, resp, err
+	}
+	return i, resp, err
 }
