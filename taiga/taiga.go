@@ -126,6 +126,7 @@ func (c *Client) NewRequest(method, path string, opt interface{}) (*http.Request
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-disable-pagination", "True")
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}
