@@ -84,16 +84,18 @@ func (s *UserstoriesService) ListUserstories() ([]*Userstory, *Response, error) 
 }
 
 //FindUserstoryByRegexName search issues by pattern matching user stories name
-func (s *UserstoriesService) FindUserstoryByRegexName(pattern string) ([]*Userstory, *Response, error) {
+func (s *UserstoriesService) FindUserstoryByRegexName(pattern string) (*Userstory, *Response, error) {
 	re := regexp.MustCompile(pattern)
-	userstories, resp, err := s.ListUserstories()
-	var matchingUserstories []*Userstory
+	userstories, _, err := s.ListUserstories()
+	if err != nil {
+		return nil, nil, err
+	}
 	for _, userstory := range userstories {
 		if re.FindString(userstory.Subject) != "" {
-			matchingUserstories = append(matchingUserstories, userstory)
+			return userstory, nil, err
 		}
 	}
-	return matchingUserstories, resp, err
+	return nil, nil, err
 }
 
 // ListUserstoryStatuses lists issue status for a given project id

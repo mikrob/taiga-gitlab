@@ -51,6 +51,10 @@ func main() {
 			Name:  "taiga-skip-user",
 			Usage: "Skip user creation",
 		},
+		cli.BoolFlag{
+			Name:  "create-task",
+			Usage: "Create task associated with user story",
+		},
 	}
 	app.Commands = []cli.Command{
 		{

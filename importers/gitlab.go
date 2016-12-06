@@ -288,8 +288,8 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 			if issueAssigneTaiga.ID > 0 {
 				u.Assigne = issueAssigneTaiga.ID
 			}
-			searchUserstories, _, _ := taigaClient.Userstories.FindUserstoryByRegexName(issueSubjectPrefix)
-			if len(searchUserstories) == 0 {
+			existingUserstory, _, _ := taigaClient.Userstories.FindUserstoryByRegexName(issueSubjectPrefix)
+			if existingUserstory == nil {
 				userstory, _, err := taigaClient.Userstories.CreateUserstory(u)
 				if err != nil {
 					log.Fatal(err.Error())
@@ -309,7 +309,33 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 					log.Printf("Create new comment %+v", taigaUserstoryPatched)
 				}
 			} else {
-				log.Printf("Gitlab issue found in Taiga %+v", searchUserstories)
+				log.Printf("Gitlab issue found in Taiga %+v", existingUserstory)
+			}
+			// Create associated task
+			if c.Bool("create-task") == true {
+				searchTask, _, err := taigaClient.Tasks.FindTaskByRegexName(issueSubjectPrefix)
+				if err != nil {
+					log.Fatal("Cannot create task")
+				}
+				if searchTask == nil {
+					newTaskOpts := &taiga.CreateTaskOptions{
+						Subject:     existingUserstory.Subject,
+						ProjectID:   existingUserstory.ProjectID,
+						UserstoryID: existingUserstory.ID,
+						Status:      existingUserstory.Status,
+					}
+					if existingUserstory.Milestone > 0 {
+						newTaskOpts.Milestone = existingUserstory.ID
+					}
+					if existingUserstory.Assigne > 0 {
+						newTaskOpts.Assigne = existingUserstory.ID
+					}
+					newTask, _, err := taigaClient.Tasks.CreateTask(newTaskOpts)
+					if err != nil {
+
+					}
+					log.Println("Create new task ", newTask.Subject)
+				}
 			}
 		}
 	}
