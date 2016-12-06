@@ -315,7 +315,7 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 			if c.Bool("create-task") == true {
 				searchTask, _, err := taigaClient.Tasks.FindTaskByRegexName(issueSubjectPrefix)
 				if err != nil {
-					log.Fatal("Cannot create task")
+					log.Fatal("Cannot search task")
 				}
 				if searchTask == nil {
 					newTaskOpts := &taiga.CreateTaskOptions{
@@ -325,14 +325,14 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 						Status:      existingUserstory.Status,
 					}
 					if existingUserstory.Milestone > 0 {
-						newTaskOpts.Milestone = existingUserstory.ID
+						newTaskOpts.Milestone = existingUserstory.Milestone
 					}
 					if existingUserstory.Assigne > 0 {
-						newTaskOpts.Assigne = existingUserstory.ID
+						newTaskOpts.Assigne = existingUserstory.Assigne
 					}
 					newTask, _, err := taigaClient.Tasks.CreateTask(newTaskOpts)
 					if err != nil {
-
+						log.Fatal("Cannot create task")
 					}
 					log.Println("Create new task ", newTask.Subject)
 				}
