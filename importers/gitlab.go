@@ -142,7 +142,8 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 	}
 	issueStatus := new(taiga.IssueStatus)
 	userstoryStatus := new(taiga.UserstoryStatus)
-	var objectToCreate string
+	//var objectToCreate string
+	objectToCreate := "issue"
 	z := &Proxy{taiga: taigaClient, gitlab: git, taigaProject: taigaProject}
 	for _, issue := range issues {
 		// sync author
