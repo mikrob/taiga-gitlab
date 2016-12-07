@@ -16,6 +16,26 @@ type Proxy struct {
 	taigaProject *taiga.Project
 }
 
+// TaskStatusEquiv returns a task status ID based on userstory status ID
+func TaskStatusEquiv(userstoryStatusID int) int {
+	switch userstoryStatusID {
+	case 1: // new
+		return 1 // new
+	case 2: //ready
+		return 1 // new
+	case 3: // in progress
+		return 2 // in progress
+	case 4: // ready for test
+		return 3
+	case 5: // done
+		return 4 // closed
+	case 6: // archived
+		return 4 // closed
+	default:
+		return 1 // new
+	}
+}
+
 // ImportGitlabUser sync Gitlab user to Taiga
 func (p *Proxy) ImportGitlabUser(gitlabUser *gitlab.User) (*taiga.User, error) {
 	taigaUser, _, err := p.taiga.Users.FindUserByUsername(gitlabUser.Username)
@@ -288,6 +308,7 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 			if issueAssigneTaiga.ID > 0 {
 				u.Assigne = issueAssigneTaiga.ID
 			}
+			var relatedUserStory *taiga.Userstory
 			existingUserstory, _, _ := taigaClient.Userstories.FindUserstoryByRegexName(issueSubjectPrefix)
 			if existingUserstory == nil {
 				userstory, _, err := taigaClient.Userstories.CreateUserstory(u)
@@ -295,6 +316,7 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 					log.Fatal(err.Error())
 				}
 				fmt.Println("Created user story", userstory.ID, userstoryStatus.Name)
+				relatedUserStory = userstory
 				listNotesOpts := gitlab.ListIssueNotesOptions{}
 				notes, _, _ := git.Notes.ListIssueNotes(project.ID, issue.ID, &listNotesOpts)
 				for _, note := range notes {
@@ -310,6 +332,7 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 				}
 			} else {
 				log.Printf("Gitlab issue found in Taiga %+v", existingUserstory)
+				relatedUserStory = existingUserstory
 			}
 			// Create associated task
 			if c.Bool("create-task") == true {
@@ -318,23 +341,26 @@ func ImportGitlab2Taiga(c *cli.Context) error {
 					log.Fatal("Cannot search task")
 				}
 				if searchTask == nil {
+					taskStatusID := TaskStatusEquiv(relatedUserStory.Status)
 					newTaskOpts := &taiga.CreateTaskOptions{
-						Subject:     existingUserstory.Subject,
-						ProjectID:   existingUserstory.ProjectID,
-						UserstoryID: existingUserstory.ID,
-						Status:      existingUserstory.Status,
+						Subject:     relatedUserStory.Subject,
+						ProjectID:   relatedUserStory.ProjectID,
+						UserstoryID: relatedUserStory.ID,
+						Status:      taskStatusID,
 					}
-					if existingUserstory.Milestone > 0 {
-						newTaskOpts.Milestone = existingUserstory.Milestone
+					if relatedUserStory.Milestone > 0 {
+						newTaskOpts.Milestone = relatedUserStory.Milestone
 					}
-					if existingUserstory.Assigne > 0 {
-						newTaskOpts.Assigne = existingUserstory.Assigne
+					if relatedUserStory.Assigne > 0 {
+						newTaskOpts.Assigne = relatedUserStory.Assigne
 					}
 					newTask, _, err := taigaClient.Tasks.CreateTask(newTaskOpts)
 					if err != nil {
 						log.Fatal("Cannot create task")
 					}
 					log.Println("Create new task ", newTask.Subject)
+				} else {
+					log.Println("Associated task already exists")
 				}
 			}
 		}

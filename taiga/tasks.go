@@ -21,13 +21,21 @@ type Task struct {
 
 // CreateTaskOptions represents the CreateTask() options
 type CreateTaskOptions struct {
-	ID          int    `json:"id"`
 	Subject     string `json:"subject"`
 	ProjectID   int    `json:"project"`
 	UserstoryID int    `json:"user_story"`
 	Status      int    `json:"status"`
 	Assigne     int    `json:"assigned_to,omitempty"`
 	Milestone   int    `json:"milestone,omitempty"`
+}
+
+// TaskStatus represents a Taiga task status
+type TaskStatus struct {
+	ID        int    `json:"id"`
+	IsClosed  bool   `json:"is_closed"`
+	Name      string `json:"name"`
+	ProjectID int    `json:"project"`
+	Slug      string `json:"slug"`
 }
 
 // CreateTask creates a new project task.
@@ -71,4 +79,33 @@ func (s *TasksService) FindTaskByRegexName(pattern string) (*Task, *Response, er
 		}
 	}
 	return nil, resp, err
+}
+
+// ListTaskStatuses lists issue status for a given project id
+func (s *TasksService) ListTaskStatuses() ([]*TaskStatus, *Response, error) {
+	req, err := s.client.NewRequest("GET", "task-statuses", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	var t []*TaskStatus
+	resp, err := s.client.Do(req, &t)
+	if err != nil {
+		return nil, resp, err
+	}
+	return t, resp, err
+}
+
+// FindTaskStatusByRegexName search issues by pattern matching task status
+func (s *TasksService) FindTaskStatusByRegexName(pattern string) (*TaskStatus, *Response, error) {
+	re := regexp.MustCompile(pattern)
+	statuses, resp, err := s.ListTaskStatuses()
+	if err != nil {
+		return nil, resp, err
+	}
+	for _, status := range statuses {
+		if re.FindString(status.Name) != "" {
+			return status, nil, nil
+		}
+	}
+	return nil, nil, nil
 }
