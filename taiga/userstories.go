@@ -69,18 +69,46 @@ func (s *UserstoriesService) CreateUserstory(opt *CreateUserstoryOptions) (*User
 	return u, resp, err
 }
 
-// ListUserstories lists user stories
-func (s *UserstoriesService) ListUserstories() ([]*Userstory, *Response, error) {
-	req, err := s.client.NewRequest("GET", "userstories", nil)
+func internalListUserStories(client *Client) ([]*Userstory, *Response, error) {
+	req, err := client.NewRequest("GET", "userstories", nil)
 	if err != nil {
 		return nil, nil, err
 	}
 	var u []*Userstory
-	resp, err := s.client.Do(req, &u)
+	resp, err := client.Do(req, &u)
 	if err != nil {
 		return nil, resp, err
 	}
 	return u, resp, err
+}
+
+// ListUserstories lists user stories
+func (s *UserstoriesService) ListUserstories() ([]*Userstory, *Response, error) {
+	return internalListUserStories(s.client)
+}
+
+// ListUserstoriesForMilestone lists user stories
+func (s *UserstoriesService) ListUserstoriesForMilestone(milestone Milestone) ([]*Userstory, *Response, error) {
+	u, resp, err := internalListUserStories(s.client)
+	var result []*Userstory
+	for _, us := range u {
+		if us.Milestone == milestone.ID {
+			result = append(result, us)
+		}
+	}
+	return result, resp, err
+}
+
+// ListUserstoriesForUser lists user stories
+func (s *UserstoriesService) ListUserstoriesForUser(user User) ([]*Userstory, *Response, error) {
+	u, resp, err := internalListUserStories(s.client)
+	var result []*Userstory
+	for _, us := range u {
+		if us.Assigne == user.ID {
+			result = append(result, us)
+		}
+	}
+	return result, resp, err
 }
 
 //FindUserstoryByRegexName search issues by pattern matching user stories name
