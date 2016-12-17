@@ -13,6 +13,7 @@ type Milestone struct {
 	ProjectID       int    `json:"project"`
 	EstimatedStart  string `json:"estimated_start"`
 	EstimatedFinish string `json:"estimated_finish"`
+	UserStoryList   []*Userstory
 }
 
 // CreateMilestoneOptions represents the CreateMilestone() options
