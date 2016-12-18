@@ -1,5 +1,7 @@
 package taiga
 
+import "fmt"
+
 //MilestonesService handles communication with the milestones related methods of
 // the Taiga API.
 type MilestonesService struct {
@@ -8,12 +10,12 @@ type MilestonesService struct {
 
 // Milestone represent a Taiga milestone
 type Milestone struct {
-	ID              int    `json:"id"`
-	Name            string `json:"name"`
-	ProjectID       int    `json:"project"`
-	EstimatedStart  string `json:"estimated_start"`
-	EstimatedFinish string `json:"estimated_finish"`
-	UserStoryList   []*Userstory
+	ID              int          `json:"id"`
+	Name            string       `json:"name"`
+	ProjectID       int          `json:"project"`
+	EstimatedStart  string       `json:"estimated_start"`
+	EstimatedFinish string       `json:"estimated_finish"`
+	UserStoryList   []*Userstory `json:"user_stories"`
 }
 
 // CreateMilestoneOptions represents the CreateMilestone() options
@@ -53,7 +55,41 @@ func (s *MilestonesService) ListMilestones() ([]*Milestone, *Response, error) {
 	return m, resp, err
 }
 
-//FindMilestoneByName search issues by pattern matching issue name
+//GetMilestoneID return the id of a milestone given its name
+func (s *MilestonesService) GetMilestoneID(milestoneName string, projectName string) int {
+	project, _, err := s.client.Projects.GetProjectByName(projectName)
+	if err != nil {
+		fmt.Println("Error while retrieving project : ", projectName)
+		return -1
+	}
+	milestones, _, err := s.FindMilestoneByName(milestoneName, project.ID)
+	if err != nil {
+		fmt.Println(fmt.Errorf("Error while retrieving milestone: %s, in project : %s", milestoneName, project.Name))
+	}
+	if len(milestones) > 1 {
+		fmt.Println(fmt.Errorf("Several milestone are matching the name : %s, in project : %s", milestoneName, project.Name))
+		return -1
+	}
+	return (*milestones[0]).ID
+}
+
+// GetMilestoneDetails retreive milestone content
+func (s *MilestonesService) GetMilestoneDetails(milestoneName string, projectName string) (Milestone, *Response, error) {
+	milestoneID := s.GetMilestoneID(milestoneName, projectName)
+	milestoneURL := fmt.Sprintf("milestones/%d", milestoneID)
+	req, err := s.client.NewRequest("GET", milestoneURL, nil)
+	if err != nil {
+		return Milestone{}, nil, err
+	}
+	var m Milestone
+	resp, err := s.client.Do(req, &m)
+	if err != nil {
+		return Milestone{}, resp, err
+	}
+	return m, resp, nil
+}
+
+//FindMilestoneByName search milestone by pattern matching issue name
 func (s *MilestonesService) FindMilestoneByName(name string, pid int) ([]*Milestone, *Response, error) {
 	var matchingMilestone []*Milestone
 	milestones, resp, err := s.ListMilestones()
