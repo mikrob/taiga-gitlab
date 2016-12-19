@@ -3,6 +3,7 @@ package taiga
 import (
 	"fmt"
 	"regexp"
+	"time"
 )
 
 // IssuesService handles communication with the issues related methods of
@@ -13,15 +14,16 @@ type IssuesService struct {
 
 // Issue represent a Taiga issue
 type Issue struct {
-	ID          int    `json:"id"`
-	Subject     string `json:"subject"`
-	ProjectID   int    `json:"project"`
-	Description string `json:"description"`
-	Status      int    `json:"status"`
-	Assigne     int    `json:"assigned_to,omitempty"`
-	Milestone   int    `json:"milestone,omitempty"`
-	OwnerID     int    `json:"owner"`
-	Version     int    `json:"version"`
+	ID           int       `json:"id"`
+	Subject      string    `json:"subject"`
+	ProjectID    int       `json:"project"`
+	Description  string    `json:"description"`
+	Status       int       `json:"status"`
+	Assigne      int       `json:"assigned_to,omitempty"`
+	Milestone    int       `json:"milestone,omitempty"`
+	OwnerID      int       `json:"owner"`
+	Version      int       `json:"version"`
+	LastModified time.Time `json:"modified_date"`
 }
 
 // CreateIssueOptions represents the CreateIssue() options
@@ -118,4 +120,19 @@ func (s *IssuesService) CreateCommentIssue(issueID int, opt *CreateCommentIssueO
 		return nil, resp, err
 	}
 	return i, resp, err
+}
+
+// GetIssueHistory retrieve user story history
+func (s *UserstoriesService) GetIssueHistory(userstoryID int) ([]*HistoryEntry, *Response, error) {
+	url := fmt.Sprintf("history/issue/%d", userstoryID)
+	req, err := s.client.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	var historyEntries []*HistoryEntry
+	resp, err := s.client.Do(req, &historyEntries)
+	if err != nil {
+		return nil, resp, err
+	}
+	return historyEntries, resp, err
 }

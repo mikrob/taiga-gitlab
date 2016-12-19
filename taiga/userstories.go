@@ -28,6 +28,7 @@ type Userstory struct {
 	Version        int            `json:"version"`
 	Points         map[string]int `json:"points"`
 	LastModified   time.Time      `json:"modified_date"`
+	Ref            int            `json:"ref"`
 	PointsPerRoles map[Role]Point
 }
 
@@ -161,7 +162,13 @@ func (s *IssuesService) CreateCommentUserstory(userstoryID int, opt *CreateComme
 
 //HistoryValues represent history values
 type HistoryValues struct {
-	Status map[string]string `json:"status"`
+	//Status map[string]string `json:"status"`
+	Status []string `json:"status"`
+}
+
+//HistroyDiff represent history diff
+type HistroyDiff struct {
+	Status []int `json:"status"`
 }
 
 //HistoryEntry represent an history entry
@@ -169,7 +176,8 @@ type HistoryEntry struct {
 	Comment          string        `json:"comment"`
 	ID               string        `json:"id"`
 	Type             int           `json:"type"`
-	HistoryValueList HistoryValues `json:"values"`
+	HistoryValueList HistoryValues `json:"values_diff"`
+	Diff             HistroyDiff   `json:"diff"`
 	CreatedAt        time.Time     `json:"created_at"`
 }
 
