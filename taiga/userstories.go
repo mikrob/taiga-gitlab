@@ -3,6 +3,7 @@ package taiga
 import (
 	"fmt"
 	"regexp"
+	"time"
 )
 
 // UserstoriesService handles communication with the user stories related methods of
@@ -26,6 +27,7 @@ type Userstory struct {
 	Assigne        int            `json:"assigned_to,omitempty"`
 	Version        int            `json:"version"`
 	Points         map[string]int `json:"points"`
+	LastModified   time.Time      `json:"modified_date"`
 	PointsPerRoles map[Role]Point
 }
 
@@ -155,4 +157,25 @@ func (s *IssuesService) CreateCommentUserstory(userstoryID int, opt *CreateComme
 		return nil, resp, err
 	}
 	return u, resp, err
+}
+
+//HistoryEntry represent an history entry
+type HistoryEntry struct {
+	Comment string `json:"comment"`
+	ID      string `json:"id"`
+	Type    int    `json:"type"`
+}
+
+func (s *UserstoriesService) GetUserStoryHistory(userstoryID int) (*HistoryEntry, *Response, error) {
+	url := fmt.Sprintf("history/userstory/%d", userstoryID)
+	req, err := s.client.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	h := new(HistoryEntry)
+	resp, err := s.client.Do(req, h)
+	if err != nil {
+		return nil, resp, err
+	}
+	return h, resp, err
 }
