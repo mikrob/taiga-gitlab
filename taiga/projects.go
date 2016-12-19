@@ -54,6 +54,20 @@ func (s *ProjectsService) GetProject(id int) (*Project, *Response, error) {
 	return p, resp, err
 }
 
+// GetProjectID return id for project with given name
+func (s *ProjectsService) GetProjectID(name string) (int, error) {
+	projects, _, err := s.ListProjects()
+	if err != nil {
+		return 0, err
+	}
+	for _, project := range projects {
+		if project.Name == name {
+			return project.ID, nil
+		}
+	}
+	return 0, nil
+}
+
 // GetProjectByName retrieve a Taiga project by its name
 func (s *ProjectsService) GetProjectByName(name string) (*Project, *Response, error) {
 	var p *Project

@@ -65,6 +65,8 @@ func (s *MilestonesService) GetMilestoneID(milestoneName string, projectName str
 	milestones, _, err := s.FindMilestoneByName(milestoneName, project.ID)
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error while retrieving milestone: %s, in project : %s", milestoneName, project.Name))
+		fmt.Println(err.Error())
+		return -1
 	}
 	if len(milestones) > 1 {
 		fmt.Println(fmt.Errorf("Several milestone are matching the name : %s, in project : %s", milestoneName, project.Name))

@@ -16,15 +16,17 @@ type CreateUserstoryPointOptions map[string]float64
 
 // Userstory represent a Taiga user story
 type Userstory struct {
-	ID          int    `json:"id"`
-	Subject     string `json:"subject"`
-	ProjectID   int    `json:"project"`
-	Description string `json:"description"`
-	Status      int    `json:"status"`
-	Milestone   int    `json:"milestone,omitempty"`
-	OwnerID     int    `json:"owner"`
-	Assigne     int    `json:"assigned_to,omitempty"`
-	Version     int    `json:"version"`
+	ID             int            `json:"id"`
+	Subject        string         `json:"subject"`
+	ProjectID      int            `json:"project"`
+	Description    string         `json:"description"`
+	Status         int            `json:"status"`
+	Milestone      int            `json:"milestone,omitempty"`
+	OwnerID        int            `json:"owner"`
+	Assigne        int            `json:"assigned_to,omitempty"`
+	Version        int            `json:"version"`
+	Points         map[string]int `json:"points"`
+	PointsPerRoles map[Role]Point
 }
 
 // CreateUserstoryOptions represents the CreateUserstory() options
