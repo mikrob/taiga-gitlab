@@ -30,6 +30,7 @@ type Userstory struct {
 	LastModified   time.Time      `json:"modified_date"`
 	Ref            int            `json:"ref"`
 	PointsPerRoles map[Role]Point
+	AssignedUser   string
 }
 
 // CreateUserstoryOptions represents the CreateUserstory() options
