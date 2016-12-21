@@ -196,3 +196,45 @@ func (s *UserstoriesService) GetUserStoryHistory(userstoryID int) ([]*HistoryEnt
 	}
 	return historyEntries, resp, err
 }
+
+//UserStoryCustomAttribute represent userstory custom attributes
+type UserStoryCustomAttribute struct {
+	Name string `json:"name"`
+	ID   int    `json:"id"`
+}
+
+//GetUserStoryCustomAttributes retrieve custom attributes available for US
+func (s *UserstoriesService) GetUserStoryCustomAttributes() ([]*UserStoryCustomAttribute, *Response, error) {
+	req, err := s.client.NewRequest("GET", "userstory-custom-attributes", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	var customAttributes []*UserStoryCustomAttribute
+	resp, err := s.client.Do(req, &customAttributes)
+	if err != nil {
+		return nil, resp, err
+	}
+	return customAttributes, resp, err
+}
+
+//CustomAttributeValues represent a custom attribute value
+type CustomAttributeValues struct {
+	Values      map[string]string `json:"attributes_values"`
+	UserStoryId int               `json:"user_story"`
+}
+
+//GetUserStoryCustomAttributeValue return value for a custom attribute
+func (s *UserstoriesService) GetUserStoryCustomAttributeValue(attributeID int) (string, error) {
+	url := fmt.Sprintf("api/v1/userstories/custom-attributes-values/%d", attributeID)
+	req, err := s.client.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+	var customAttributesValues []*CustomAttributeValues
+	resp, err := s.client.Do(req, &customAttributesValues)
+	if err != nil {
+		return "", err
+	}
+	return customAttributesValues, resp, err
+
+}
