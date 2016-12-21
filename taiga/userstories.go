@@ -31,6 +31,12 @@ type Userstory struct {
 	Ref            int            `json:"ref"`
 	PointsPerRoles map[Role]Point
 	AssignedUser   string
+	TotalPoint     float64
+	ElapsedTime    float64
+	Overtaking     bool
+	Undertaking    bool
+	RightTime      bool
+	Color          string
 }
 
 // CreateUserstoryOptions represents the CreateUserstory() options
@@ -224,22 +230,6 @@ type CustomAttributeValues struct {
 }
 
 //GetUserStoryCustomAttributeValue return value for a custom attribute
-// should use /api/v1/userstories/custom-attributes-values/{userStoryId}
-// func (s *UserstoriesService) GetUserStoryCustomAttributeValue(userStoryID int) ([]*CustomAttributeValues, *Response, error) {
-// 	url := fmt.Sprintf("userstories/custom-attributes-values/%d", userStoryID)
-// 	req, err := s.client.NewRequest("GET", url, nil)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-// 	var customAttributesValues []*CustomAttributeValues
-// 	resp, err := s.client.Do(req, &customAttributesValues)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-// 	return customAttributesValues, resp, err
-//
-// }
-
 func (s *UserstoriesService) GetUserStoryCustomAttributeValue(userStoryID int) (*CustomAttributeValues, *Response, error) {
 	url := fmt.Sprintf("userstories/custom-attributes-values/%d", userStoryID)
 	req, err := s.client.NewRequest("GET", url, nil)
@@ -247,12 +237,10 @@ func (s *UserstoriesService) GetUserStoryCustomAttributeValue(userStoryID int) (
 		return nil, nil, err
 	}
 
-	var customAttributesValues *CustomAttributeValues
+	customAttributesValues := new(CustomAttributeValues)
 	resp, err := s.client.Do(req, customAttributesValues)
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println("status code : ")
-	fmt.Println(resp.Status)
 	return customAttributesValues, resp, err
 }
