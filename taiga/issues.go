@@ -24,6 +24,7 @@ type Issue struct {
 	OwnerID      int       `json:"owner"`
 	Version      int       `json:"version"`
 	LastModified time.Time `json:"modified_date"`
+	Ref          int       `json:"ref"`
 	AssignedUser string
 }
 
