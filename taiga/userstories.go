@@ -220,21 +220,39 @@ func (s *UserstoriesService) GetUserStoryCustomAttributes() ([]*UserStoryCustomA
 //CustomAttributeValues represent a custom attribute value
 type CustomAttributeValues struct {
 	Values      map[string]string `json:"attributes_values"`
-	UserStoryId int               `json:"user_story"`
+	UserStoryID int               `json:"user_story"`
 }
 
 //GetUserStoryCustomAttributeValue return value for a custom attribute
-func (s *UserstoriesService) GetUserStoryCustomAttributeValue(attributeID int) (string, error) {
-	url := fmt.Sprintf("api/v1/userstories/custom-attributes-values/%d", attributeID)
+// should use /api/v1/userstories/custom-attributes-values/{userStoryId}
+// func (s *UserstoriesService) GetUserStoryCustomAttributeValue(userStoryID int) ([]*CustomAttributeValues, *Response, error) {
+// 	url := fmt.Sprintf("userstories/custom-attributes-values/%d", userStoryID)
+// 	req, err := s.client.NewRequest("GET", url, nil)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	var customAttributesValues []*CustomAttributeValues
+// 	resp, err := s.client.Do(req, &customAttributesValues)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	return customAttributesValues, resp, err
+//
+// }
+
+func (s *UserstoriesService) GetUserStoryCustomAttributeValue(userStoryID int) (*CustomAttributeValues, *Response, error) {
+	url := fmt.Sprintf("userstories/custom-attributes-values/%d", userStoryID)
 	req, err := s.client.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", err
+		return nil, nil, err
 	}
-	var customAttributesValues []*CustomAttributeValues
-	resp, err := s.client.Do(req, &customAttributesValues)
-	if err != nil {
-		return "", err
-	}
-	return customAttributesValues, resp, err
 
+	var customAttributesValues *CustomAttributeValues
+	resp, err := s.client.Do(req, customAttributesValues)
+	if err != nil {
+		return nil, nil, err
+	}
+	fmt.Println("status code : ")
+	fmt.Println(resp.Status)
+	return customAttributesValues, resp, err
 }

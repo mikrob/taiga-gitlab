@@ -146,10 +146,13 @@ func (c *Client) NewRequest(method, path string, opt interface{}) (*http.Request
 // interface, the raw response body will be written to v, without attempting to
 // first decode it.
 func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
+	fmt.Println("TAIGA HTTP CLIENT DO")
 	resp, err := c.client.Do(req)
 	if err != nil {
+		fmt.Println("ERROR :", err.Error())
 		return nil, err
 	}
+	fmt.Println("AFTER REQUEST")
 
 	defer resp.Body.Close()
 
@@ -159,6 +162,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 	if err != nil {
 		// even though there was an error, we still return the response
 		// in case the caller wants to inspect it further
+		fmt.Println("Chek response error :", err.Error())
 		return response, err
 	}
 
@@ -168,6 +172,8 @@ func (c *Client) Do(req *http.Request, v interface{}) (*Response, error) {
 		} else {
 			err = json.NewDecoder(resp.Body).Decode(v)
 		}
+	} else {
+		fmt.Println("V IS NIL")
 	}
 	return response, err
 }
