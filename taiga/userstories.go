@@ -37,6 +37,7 @@ type Userstory struct {
 	Undertaking    bool
 	RightTime      bool
 	Color          string
+	TaskList       []*Task
 }
 
 // CreateUserstoryOptions represents the CreateUserstory() options
